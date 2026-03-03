@@ -143,7 +143,9 @@ function App() {
 
     return () => {
       window.fetch = originalFetch;
-      window.XMLHttpRequest = originalXHR;
+      XMLHttpRequest.prototype.open = originalXHROpen;
+      document.createElement = originalCreateElement;
+      (window as any).Image = originalImage;
       console.error = originalError;
       console.warn = originalWarn;
       window.removeEventListener('error', handleSuppression, true);
