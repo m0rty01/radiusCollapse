@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import type { GameLocation } from '../utils/locations';
 
 interface StreetViewPanelProps {
