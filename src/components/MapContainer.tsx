@@ -89,8 +89,6 @@ const MapContainer = forwardRef<MapContainerHandle, MapContainerProps>(({ onMapL
 
             return () => {
                 resizeObserver.disconnect();
-                window.removeEventListener('error', handleSuppression);
-                window.removeEventListener('unhandledrejection', handleSuppression);
             };
         } catch {
             setError('Failed to initialize map engine.');
