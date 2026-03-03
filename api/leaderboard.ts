@@ -9,27 +9,30 @@ export const config = {
 
 export default async function handler(request: Request) {
     try {
-        // Robust auto-discovery: Look for any env vars ending in the required suffixes
-        // This handles cases where prefixes like "kv_", "UPSTASH_", or "KV_" are used/doubled
-        const findEnv = (suffix: string) =>
-            Object.entries(process.env).find(([k]) => k.toUpperCase().endsWith(suffix))?.[1];
+        // Robust auto-discovery: Scan all env vars for Redis/KV credentials
+        let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+        let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
-        const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || findEnv('REST_API_URL');
-        const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || findEnv('REST_API_TOKEN');
+        // Fallback for custom prefixes (like kv_KV_...)
+        // Edge runtime process.env is sometimes a proxy, so we iterate manually
+        if (!url || !token) {
+            for (const key in process.env) {
+                const k = key.toUpperCase();
+                const value = process.env[key];
+                if (k.endsWith('REST_API_URL')) url = value;
+                if (k.endsWith('REST_API_TOKEN') && !k.includes('READ_ONLY')) token = value;
+            }
+        }
 
         if (!url || !token) {
-            const keys = Object.keys(process.env).filter(k => k.includes('KV') || k.includes('REDIS') || k.includes('UPSTASH'));
             return new Response(JSON.stringify({
-                error: 'Database credentials not found.',
-                foundKeys: keys,
-                fix: 'The API expects variables ending in REST_API_URL and REST_API_TOKEN.'
+                error: 'Database connection failed. Please ensure Vercel KV or Redis is correctly linked in your project settings.'
             }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' },
             });
         }
 
-        // Initialize client manually
         const kv = createClient({ url, token });
         const { method } = request;
 

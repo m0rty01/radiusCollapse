@@ -57,8 +57,10 @@ const MapContainer = forwardRef<MapContainerHandle, MapContainerProps>(({ onMapL
                 style: 'mapbox://styles/mapbox/dark-v11',
                 center: [0, 20],
                 zoom: 2,
-                // 2D flat map for the drawing phase
                 projection: { name: 'mercator' },
+                // Minimize telemetry/noise that gets blocked by adblockers
+                trackResize: true,
+                collectResourceTiming: false,
             });
 
             mapRef.current = map;
