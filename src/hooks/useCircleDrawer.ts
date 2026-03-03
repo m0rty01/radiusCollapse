@@ -108,8 +108,8 @@ export const useCircleDrawer = (map: Map | null) => {
         map.boxZoom.disable();
 
         const getEventData = (e: MapMouseEvent | MapTouchEvent) => {
-            const point = 'point' in e ? e.point : e.points[0];
-            const lngLat = 'lngLat' in e ? e.lngLat : e.lngLats[0];
+            const point = 'point' in e ? (e as MapMouseEvent).point : (e as MapTouchEvent).points[0];
+            const lngLat = 'lngLat' in e ? (e as MapMouseEvent).lngLat : (e as MapTouchEvent).lngLats[0];
             const originalEvent = e.originalEvent;
             return { point, lngLat, originalEvent };
         };
