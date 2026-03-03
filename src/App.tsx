@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapContainer, { type MapContainerHandle } from './components/MapContainer';
 import StreetViewPanel from './components/StreetViewPanel';
