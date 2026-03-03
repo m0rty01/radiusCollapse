@@ -64,8 +64,10 @@ const MapContainer = forwardRef<MapContainerHandle, MapContainerProps>(({ onMapL
             });
 
             // Re-enable resize handling manually
-            const resizeObserver = new ResizeObserver(() => map.resize());
-            resizeObserver.observe(mapContainerRef.current);
+            const resizeObserver = new ResizeObserver(() => {
+                if (mapRef.current) map.resize();
+            });
+            if (mapContainerRef.current) resizeObserver.observe(mapContainerRef.current);
 
             mapRef.current = map;
 
@@ -84,6 +86,12 @@ const MapContainer = forwardRef<MapContainerHandle, MapContainerProps>(({ onMapL
                     console.warn('[Mapbox] Non-fatal 403 on tile.');
                 }
             });
+
+            return () => {
+                resizeObserver.disconnect();
+                window.removeEventListener('error', handleSuppression);
+                window.removeEventListener('unhandledrejection', handleSuppression);
+            };
         } catch {
             setError('Failed to initialize map engine.');
         }
