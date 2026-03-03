@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapContainer, { type MapContainerHandle } from './components/MapContainer';
 import StreetViewPanel from './components/StreetViewPanel';
@@ -18,6 +18,26 @@ const STREETVIEW_DURATION = 30; // seconds
 
 function App() {
   const [phase, setPhase] = useState<GamePhase>('IDLE');
+
+  // Supress non-fatal console noise from ad-blockers blocking telemetry
+  useEffect(() => {
+    const handleSuppression = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const message = (event as any).message || (event as any).reason?.message || '';
+      // Filter for network errors from known telemetry providers
+      if (message.includes('Failed to fetch') || message.includes('ERR_BLOCKED_BY_CLIENT')) {
+        const stack = (event as any).error?.stack || (event as any).reason?.stack || '';
+        if (stack.includes('mapbox') || stack.includes('google')) {
+          event.preventDefault();
+        }
+      }
+    };
+    window.addEventListener('error', handleSuppression);
+    window.addEventListener('unhandledrejection', handleSuppression);
+    return () => {
+      window.removeEventListener('error', handleSuppression);
+      window.removeEventListener('unhandledrejection', handleSuppression);
+    };
+  }, []);
   const [round, setRound] = useState(0);
   const [totalScore, setTotalScore] = useState(0);
   const [currentRoundScore, setCurrentRoundScore] = useState(0);

@@ -59,9 +59,13 @@ const MapContainer = forwardRef<MapContainerHandle, MapContainerProps>(({ onMapL
                 zoom: 2,
                 projection: { name: 'mercator' },
                 // Minimize telemetry/noise that gets blocked by adblockers
-                trackResize: true,
+                trackResize: false, // We'll manage resize manually to avoid noise
                 collectResourceTiming: false,
             });
+
+            // Re-enable resize handling manually
+            const resizeObserver = new ResizeObserver(() => map.resize());
+            resizeObserver.observe(mapContainerRef.current);
 
             mapRef.current = map;
 
