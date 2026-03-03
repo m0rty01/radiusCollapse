@@ -28,7 +28,8 @@ function App() {
       'gen_204',
       'google-analytics',
       'stats.g.doubleclick.net',
-      'AuthenticationService'
+      'AuthenticationService',
+      'chrome-extension://'
     ];
 
     const isTrackingUrl = (url: string | null | undefined) => {
@@ -105,7 +106,7 @@ function App() {
 
     console.error = (...args) => {
       const msg = args.join(' ').toLowerCase();
-      if (msg.includes('mapbox') || msg.includes('google') || msg.includes('fetch') || msg.includes('blocked') || msg.includes('quota')) {
+      if (msg.includes('mapbox') || msg.includes('google') || msg.includes('streetview') || msg.includes('extension') || msg.includes('fetch') || msg.includes('blocked') || msg.includes('quota')) {
         return;
       }
       originalError.apply(console, args);

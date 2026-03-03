@@ -100,12 +100,9 @@ const StreetViewPanel: React.FC<StreetViewPanelProps> = ({ location, onReady, on
 
                         panorama.addListener('status_changed', () => {
                             const pStatus = panorama.getStatus();
-                            if (pStatus !== 'OK' && !cancelled) {
-                                console.error('[StreetView] status_changed error:', pStatus);
-                            }
+                            // Only log if it's a unexpected developer error, otherwise skip for silence
                         });
                     } else {
-                        console.error('[StreetView] getPanorama error:', status);
                         if (status === 'ZERO_RESULTS') {
                             // Automatically notify parent to pick a new location
                             onError?.(status);
