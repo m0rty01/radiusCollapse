@@ -144,6 +144,7 @@ function App() {
     return () => {
       window.fetch = originalFetch;
       XMLHttpRequest.prototype.open = originalXHROpen;
+      XMLHttpRequest.prototype.send = originalXHRSend;
       document.createElement = originalCreateElement;
       (window as any).Image = originalImage;
       console.error = originalError;
