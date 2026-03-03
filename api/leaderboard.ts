@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 
 const KV_KEY = 'global-leaderboard';
 const MAX_ENTRIES = 20;
@@ -9,17 +9,24 @@ export const config = {
 
 export default async function handler(request: Request) {
     try {
-        // Basic check for KV configuration
-        if (!process.env.KV_REST_API_URL) {
+        // Support both Vercel KV and standard Upstash naming patterns
+        const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || process.env.KV_URL;
+        const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_TOKEN;
+
+        if (!url || !token) {
+            const keys = Object.keys(process.env).filter(k => k.includes('KV') || k.includes('REDIS'));
             return new Response(JSON.stringify({
-                error: 'Vercel KV is not configured. Please ensure you have created and linked a KV database in the Vercel Storage tab.',
-                config: 'INTERNAL_MISSING_ENV'
+                error: 'Database not linked. Please ensure you put prefix "KV" while installing Upstash or link a Vercel KV.',
+                foundKeys: keys,
+                fix: 'Ensure KV_REST_API_URL and KV_REST_API_TOKEN exist in Vercel Settings.'
             }), {
                 status: 500,
                 headers: { 'Content-Type': 'application/json' },
             });
         }
 
+        // Initialize client manually to ensure it uses our detected variables
+        const kv = createClient({ url, token });
         const { method } = request;
 
         if (method === 'GET') {
