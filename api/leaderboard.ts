@@ -9,6 +9,17 @@ export const config = {
 
 export default async function handler(request: Request) {
     try {
+        // Basic check for KV configuration
+        if (!process.env.KV_REST_API_URL) {
+            return new Response(JSON.stringify({
+                error: 'Vercel KV is not configured. Please ensure you have created and linked a KV database in the Vercel Storage tab.',
+                config: 'INTERNAL_MISSING_ENV'
+            }), {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+
         const { method } = request;
 
         if (method === 'GET') {
