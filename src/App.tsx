@@ -146,10 +146,13 @@ function App() {
             Explore. Guess. Collapse the radius.
           </p>
           <div className="splash-rules">
-            <div className="rule-item">🌍 <span>Explore a random street view</span></div>
-            <div className="rule-item">⏱️ <span>Before the timer runs out</span></div>
-            <div className="rule-item">🎯 <span>Draw a circle on the map</span></div>
-            <div className="rule-item">📏 <span>Smaller circle = more points</span></div>
+            <div className="rule-item">🌍 <span>Explore a random Street View panorama</span></div>
+            <div className="rule-item">⏱️ <span>Gather clues before the timer runs out</span></div>
+            <div className="rule-item">📏 <span><strong>Confidence</strong>: Smaller circles yield exponentially more points</span></div>
+            <div className="rule-item">⚠️ <span><strong>Zero Tolerance</strong>: If the target is outside your circle, you score 0</span></div>
+            <p className="splash-strategy">
+              Confidence is rewarded, but overconfidence is punished.
+            </p>
           </div>
           <button className="btn-primary btn-large" onClick={startGame}>
             Start Mission

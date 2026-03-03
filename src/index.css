@@ -237,6 +237,18 @@ button {
   color: hsl(var(--text));
 }
 
+.splash-strategy {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: hsl(var(--text-dim));
+  text-align: center;
+  padding: 0.75rem;
+  border-top: 1px solid var(--glass-border);
+  line-height: 1.5;
+  color: hsl(var(--accent));
+}
+
 /* ---- Street View Phase ---- */
 .phase-streetview {
   width: 100%;
