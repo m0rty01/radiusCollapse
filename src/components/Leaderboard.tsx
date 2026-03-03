@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { getLeaderboard, type LeaderboardEntry } from '../utils/leaderboard';
 
 interface LeaderboardProps {
@@ -7,14 +7,30 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ currentScore, onPlayAgain }) => {
-    const entries: LeaderboardEntry[] = getLeaderboard();
+    const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchEntries = async () => {
+            setLoading(true);
+            const data = await getLeaderboard();
+            setEntries(data);
+            setLoading(false);
+        };
+        fetchEntries();
+    }, []);
 
     return (
         <div className="leaderboard-overlay">
             <div className="leaderboard-card glass animate-pop">
-                <h2 className="title-gradient">🏆 Leaderboard</h2>
+                <h2 className="title-gradient">🏆 Global Leaderboard</h2>
 
-                {entries.length === 0 ? (
+                {loading ? (
+                    <div className="leaderboard-loading">
+                        <div className="spinner" />
+                        <p>Fetching global rankings...</p>
+                    </div>
+                ) : entries.length === 0 ? (
                     <p className="leaderboard-empty">No scores yet. Be the first!</p>
                 ) : (
                     <div className="leaderboard-table-wrapper">

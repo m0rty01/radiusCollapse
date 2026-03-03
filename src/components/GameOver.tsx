@@ -9,10 +9,14 @@ interface GameOverProps {
 
 const GameOver: React.FC<GameOverProps> = ({ totalScore, rounds, onSubmit }) => {
     const [username, setUsername] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         const name = username.trim() || 'Anonymous';
-        onSubmit(name);
+        await onSubmit(name);
+        // Phase transition happens in parent (App.tsx)
     };
 
     return (
@@ -44,11 +48,16 @@ const GameOver: React.FC<GameOverProps> = ({ totalScore, rounds, onSubmit }) => 
                         placeholder="Anonymous"
                         maxLength={20}
                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                        disabled={isSubmitting}
                     />
                 </div>
 
-                <button className="btn-primary" onClick={handleSubmit}>
-                    Submit to Leaderboard
+                <button
+                    className="btn-primary"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? <><div className="spinner-small" /> Submitting...</> : 'Submit to Leaderboard'}
                 </button>
             </div>
         </div>

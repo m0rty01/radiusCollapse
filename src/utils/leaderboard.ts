@@ -1,9 +1,6 @@
 /**
- * localStorage-backed leaderboard for Radius Collapse.
+ * Global leaderboard backed by Vercel KV (Redis).
  */
-
-const STORAGE_KEY = 'radius-collapse-leaderboard';
-const MAX_ENTRIES = 20;
 
 export interface RoundResult {
     locationName: string;
@@ -19,25 +16,45 @@ export interface LeaderboardEntry {
     rounds: RoundResult[];
 }
 
-export function getLeaderboard(): LeaderboardEntry[] {
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return [];
-        const entries: LeaderboardEntry[] = JSON.parse(raw);
-        return entries.sort((a, b) => b.score - a.score).slice(0, MAX_ENTRIES);
-    } catch {
+        const response = await fetch('/api/leaderboard');
+        if (!response.ok) throw new Error('Failed to fetch leaderboard');
+
+        const data = await response.json();
+
+        // Members are stored as JSON strings in the Redis Sorted Set
+        return data.map((item: any) => {
+            if (typeof item === 'string') {
+                try {
+                    return JSON.parse(item);
+                } catch {
+                    return item;
+                }
+            }
+            return item;
+        });
+    } catch (error) {
+        console.error('Leaderboard Fetch Error:', error);
         return [];
     }
 }
 
-export function saveScore(entry: LeaderboardEntry): void {
-    const current = getLeaderboard();
-    current.push(entry);
-    current.sort((a, b) => b.score - a.score);
-    const trimmed = current.slice(0, MAX_ENTRIES);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+export async function saveScore(entry: LeaderboardEntry): Promise<boolean> {
+    try {
+        const response = await fetch('/api/leaderboard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry),
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('Leaderboard Save Error:', error);
+        return false;
+    }
 }
 
 export function clearLeaderboard(): void {
-    localStorage.removeItem(STORAGE_KEY);
+    // Note: Global clear is usually restricted.
+    console.warn('Manual clear of global leaderboard is not implemented for security.');
 }

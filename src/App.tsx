@@ -116,8 +116,8 @@ function App() {
     setPhase('STREETVIEW');
   };
 
-  const handleSubmitUsername = (username: string) => {
-    saveScore({
+  const handleSubmitUsername = async (username: string) => {
+    await saveScore({
       username,
       score: totalScore,
       date: new Date().toISOString(),
