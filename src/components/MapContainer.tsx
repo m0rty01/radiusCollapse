@@ -23,10 +23,12 @@ const MapContainer = forwardRef<MapContainerHandle, MapContainerProps>(({ onMapL
             const map = mapRef.current;
             if (!map) return;
             // Remove guess circle layers
-            ['guess-circle-fill', 'guess-circle-outline'].forEach((id) => {
+            ['guess-circle-fill', 'guess-circle-outline', 'circle-handle-layer'].forEach((id) => {
                 if (map.getLayer(id)) map.removeLayer(id);
             });
-            if (map.getSource('guess-circle')) map.removeSource('guess-circle');
+            ['guess-circle', 'circle-handles'].forEach((id) => {
+                if (map.getSource(id)) map.removeSource(id);
+            });
             // Remove target point
             if (map.getLayer('target-point-layer')) map.removeLayer('target-point-layer');
             if (map.getSource('target-point')) map.removeSource('target-point');
