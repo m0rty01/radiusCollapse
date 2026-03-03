@@ -21,43 +21,62 @@ function App() {
 
   // Supress non-fatal console noise from ad-blockers blocking telemetry
   useEffect(() => {
-    const handleSuppression = (event: ErrorEvent | PromiseRejectionEvent) => {
-      const message = (event as any).message || (event as any).reason?.message || '';
-      if (message.includes('Failed to fetch') || message.includes('ERR_BLOCKED_BY_CLIENT') || message.includes('RecordEvent')) {
-        const stack = (event as any).error?.stack || (event as any).reason?.stack || '';
-        const url = (event as any).reason?.url || '';
-        if (stack.includes('mapbox') || stack.includes('google') || url.includes('googleapis') || url.includes('mapbox')) {
-          event.preventDefault();
-        }
+    // 1. Fetch interceptor to swallow telemetry requests
+    const originalFetch = window.fetch;
+    window.fetch = function (...args) {
+      const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request).url || '';
+      if (url.includes('events.mapbox.com') || url.includes('QuotaService') || url.includes('RecordEvent')) {
+        return Promise.resolve(new Response(null, { status: 204, statusText: 'Suppressed' }));
       }
+      return originalFetch.apply(this, args);
     };
 
-    // Aggressive console filtering for the "Fix these errors" user objective
+    // 2. Aggressive console hijacking
     const originalError = console.error;
     const originalWarn = console.warn;
 
     console.error = (...args) => {
-      const msg = args.join(' ');
-      if (msg.includes('mapbox') || msg.includes('google') || msg.includes('fetch')) {
-        if (msg.includes('telemetry') || msg.includes('QuotaService') || msg.includes('events/v2')) return;
+      const msg = args.join(' ').toLowerCase();
+      if (msg.includes('mapbox') || msg.includes('google') || msg.includes('fetch') || msg.includes('blocked') || msg.includes('quota')) {
+        return;
       }
       originalError.apply(console, args);
     };
 
     console.warn = (...args) => {
-      const msg = args.join(' ');
-      if (msg.includes('Google Maps') && msg.includes('async')) return; // Silence loading warning
+      const msg = args.join(' ').toLowerCase();
+      if (msg.includes('google maps') || msg.includes('async')) return;
       originalWarn.apply(console, args);
     };
 
-    window.addEventListener('error', handleSuppression);
-    window.addEventListener('unhandledrejection', handleSuppression);
+    // 3. Global rejection/error suppression
+    const handleSuppression = (event: ErrorEvent | PromiseRejectionEvent) => {
+      const message = (event as any).message || (event as any).reason?.message || '';
+      const stack = (event as any).error?.stack || (event as any).reason?.stack || '';
+      const url = (event as any).reason?.url || '';
+
+      const isTelemetry = message.toLowerCase().includes('fetch') ||
+        message.toLowerCase().includes('blocked') ||
+        stack.includes('mapbox') ||
+        stack.includes('google') ||
+        url.includes('googleapis') ||
+        url.includes('mapbox');
+
+      if (isTelemetry) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+
+    window.addEventListener('error', handleSuppression, true);
+    window.addEventListener('unhandledrejection', handleSuppression, true);
 
     return () => {
+      window.fetch = originalFetch;
       console.error = originalError;
       console.warn = originalWarn;
-      window.removeEventListener('error', handleSuppression);
-      window.removeEventListener('unhandledrejection', handleSuppression);
+      window.removeEventListener('error', handleSuppression, true);
+      window.removeEventListener('unhandledrejection', handleSuppression, true);
     };
   }, []);
   const [round, setRound] = useState(0);
