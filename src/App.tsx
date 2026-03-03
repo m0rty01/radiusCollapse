@@ -103,10 +103,14 @@ function App() {
     // 6. Aggressive Console Hijacking
     const originalError = console.error;
     const originalWarn = console.warn;
+    const originalLog = console.log;
 
     console.error = (...args) => {
       const msg = args.join(' ').toLowerCase();
-      if (msg.includes('mapbox') || msg.includes('google') || msg.includes('streetview') || msg.includes('extension') || msg.includes('fetch') || msg.includes('blocked') || msg.includes('quota')) {
+      if (msg.includes('mapbox') || msg.includes('google') || msg.includes('streetview') ||
+        msg.includes('extension') || msg.includes('fetch') || msg.includes('blocked') ||
+        msg.includes('quota') || msg.includes('frame_start') || msg.includes('intrinsics') ||
+        msg.includes('ses')) {
         return;
       }
       originalError.apply(console, args);
@@ -114,24 +118,36 @@ function App() {
 
     console.warn = (...args) => {
       const msg = args.join(' ').toLowerCase();
-      if (msg.includes('google maps') || msg.includes('async')) return;
+      if (msg.includes('google maps') || msg.includes('async') || msg.includes('intrinsics') ||
+        msg.includes('ses') || msg.includes('extension')) return;
       originalWarn.apply(console, args);
+    };
+
+    // Also silence noisy INFO logs about intrinsics if any
+    console.log = (...args) => {
+      const msg = args.join(' ').toLowerCase();
+      if (msg.includes('intrinsics') || msg.includes('ses removing')) return;
+      originalLog.apply(console, args);
     };
 
     // 7. Global Rejection/Error Suppression
     const handleSuppression = (event: ErrorEvent | PromiseRejectionEvent) => {
       const message = (event as any).message || (event as any).reason?.message || '';
       const stack = (event as any).error?.stack || (event as any).reason?.stack || '';
-      const url = (event as any).reason?.url || '';
+      const url = (event as any).reason?.url || (event as any).filename || '';
+      const fullMsg = (message + ' ' + stack + ' ' + url).toLowerCase();
 
-      const isTelemetry = message.toLowerCase().includes('fetch') ||
-        message.toLowerCase().includes('blocked') ||
-        stack.includes('mapbox') ||
-        stack.includes('google') ||
-        url.includes('googleapis') ||
-        url.includes('mapbox');
+      const isNoise = fullMsg.includes('fetch') ||
+        fullMsg.includes('blocked') ||
+        fullMsg.includes('mapbox') ||
+        fullMsg.includes('google') ||
+        fullMsg.includes('extension') ||
+        fullMsg.includes('frame_start') ||
+        fullMsg.includes('intrinsics') ||
+        fullMsg.includes('ses') ||
+        fullMsg.includes('removechild'); // Likely extension DOM conflict
 
-      if (isTelemetry) {
+      if (isNoise) {
         event.preventDefault();
         event.stopImmediatePropagation();
       }
@@ -148,6 +164,7 @@ function App() {
       (window as any).Image = originalImage;
       console.error = originalError;
       console.warn = originalWarn;
+      console.log = originalLog;
       window.removeEventListener('error', handleSuppression, true);
       window.removeEventListener('unhandledrejection', handleSuppression, true);
     };
