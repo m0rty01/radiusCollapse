@@ -99,7 +99,6 @@ const StreetViewPanel: React.FC<StreetViewPanelProps> = ({ location, onReady, on
                         onReady?.();
 
                         panorama.addListener('status_changed', () => {
-                            const pStatus = panorama.getStatus();
                             // Only log if it's a unexpected developer error, otherwise skip for silence
                         });
                     } else {
