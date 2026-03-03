@@ -192,10 +192,12 @@ function App() {
               <Timer duration={STREETVIEW_DURATION} onExpire={handleTimerExpire} />
             </div>
             <div className="hud-bottom glass">
-              <p className="instruction">🔍 Look around and memorize clues. Where in the world are you?</p>
-              <button className="btn-primary" onClick={handleTimerExpire}>
-                I'm Ready
-              </button>
+              <div className="action-row">
+                <p className="instruction">🔍 Look around and memorize clues. Where in the world are you?</p>
+                <button className="btn-primary" onClick={handleTimerExpire}>
+                  I'm Ready
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -444,10 +444,10 @@ button {
 
 .hud-bottom {
   align-self: center;
-  padding: 0.8rem 1.5rem;
+  padding: 1.25rem 2rem;
   pointer-events: auto;
-  width: 100%;
-  max-width: 520px;
+  width: 90%;
+  max-width: 600px;
   display: flex;
   justify-content: center;
 }
@@ -461,9 +461,11 @@ button {
 }
 
 .instruction {
-  color: hsl(var(--text-dim));
-  font-size: 0.9rem;
+  color: hsl(var(--text));
+  font-size: 1rem;
   font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
 
 .instructions-panel {
