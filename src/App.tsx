@@ -21,17 +21,53 @@ function App() {
 
   // Supress non-fatal console noise from ad-blockers blocking telemetry
   useEffect(() => {
-    // 1. Fetch interceptor to swallow telemetry requests
+    const telemetryPatterns = [
+      'events.mapbox.com',
+      'QuotaService',
+      'RecordEvent',
+      'gen_204',
+      'google-analytics',
+      'stats.g.doubleclick.net'
+    ];
+
+    const isTrackingUrl = (url: string) => telemetryPatterns.some(p => url.includes(p));
+
+    // 1. Fetch Interceptor
     const originalFetch = window.fetch;
     window.fetch = function (...args) {
       const url = typeof args[0] === 'string' ? args[0] : (args[0] as Request).url || '';
-      if (url.includes('events.mapbox.com') || url.includes('QuotaService') || url.includes('RecordEvent')) {
+      if (isTrackingUrl(url)) {
         return Promise.resolve(new Response(null, { status: 204, statusText: 'Suppressed' }));
       }
       return originalFetch.apply(this, args);
     };
 
-    // 2. Aggressive console hijacking
+    // 2. XMLHttpRequest Interceptor
+    const originalXHR = window.XMLHttpRequest;
+    function NewXHR() {
+      const xhr = new originalXHR();
+      const originalOpen = xhr.open;
+      xhr.open = function (this: XMLHttpRequest, method: string, url: string | URL) {
+        if (isTrackingUrl(url.toString())) {
+          this.send = () => { };
+          return;
+        }
+        return originalOpen.apply(this, arguments as any);
+      };
+      return xhr;
+    }
+    (window as any).XMLHttpRequest = NewXHR;
+
+    // 3. Beacon Interceptor
+    if (navigator.sendBeacon) {
+      const originalBeacon = navigator.sendBeacon;
+      navigator.sendBeacon = function (url, data) {
+        if (typeof url === 'string' && isTrackingUrl(url)) return true;
+        return originalBeacon.apply(this, arguments as any);
+      };
+    }
+
+    // 4. Aggressive console hijacking
     const originalError = console.error;
     const originalWarn = console.warn;
 
@@ -49,7 +85,7 @@ function App() {
       originalWarn.apply(console, args);
     };
 
-    // 3. Global rejection/error suppression
+    // 5. Global rejection/error suppression
     const handleSuppression = (event: ErrorEvent | PromiseRejectionEvent) => {
       const message = (event as any).message || (event as any).reason?.message || '';
       const stack = (event as any).error?.stack || (event as any).reason?.stack || '';
@@ -73,6 +109,7 @@ function App() {
 
     return () => {
       window.fetch = originalFetch;
+      window.XMLHttpRequest = originalXHR;
       console.error = originalError;
       console.warn = originalWarn;
       window.removeEventListener('error', handleSuppression, true);
