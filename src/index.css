@@ -31,6 +31,7 @@ body {
   background-color: hsl(var(--bg-dark));
   color: hsl(var(--text));
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -38,6 +39,7 @@ body {
 #root {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
 }
 
 /* ---- Glass ---- */
@@ -188,6 +190,7 @@ button {
 .game-container {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -321,6 +324,7 @@ button {
   flex-direction: column;
   justify-content: space-between;
   padding: 1.5rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   z-index: 10;
 }
 
@@ -385,6 +389,7 @@ button {
   flex-direction: column;
   justify-content: space-between;
   padding: 1.5rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   z-index: 10;
 }
 
