@@ -27,10 +27,16 @@ function App() {
       'RecordEvent',
       'gen_204',
       'google-analytics',
-      'stats.g.doubleclick.net'
+      'stats.g.doubleclick.net',
+      'google.com/maps/api/js/AuthenticationService',
+      'google.com/maps/api/js/QuotaService'
     ];
 
-    const isTrackingUrl = (url: string) => telemetryPatterns.some(p => url.includes(p));
+    const isTrackingUrl = (url: string | null | undefined) => {
+      if (!url) return false;
+      const urlStr = url.toString();
+      return telemetryPatterns.some(p => urlStr.includes(p));
+    };
 
     // 1. Fetch Interceptor
     const originalFetch = window.fetch;
@@ -42,21 +48,15 @@ function App() {
       return originalFetch.apply(this, args);
     };
 
-    // 2. XMLHttpRequest Interceptor
-    const originalXHR = window.XMLHttpRequest;
-    function NewXHR() {
-      const xhr = new originalXHR();
-      const originalOpen = xhr.open;
-      xhr.open = function (this: XMLHttpRequest, method: string, url: string | URL) {
-        if (isTrackingUrl(url.toString())) {
-          this.send = () => { };
-          return;
-        }
-        return originalOpen.apply(this, arguments as any);
-      };
-      return xhr;
-    }
-    (window as any).XMLHttpRequest = NewXHR;
+    // 2. XMLHttpRequest Prototype Interceptor (More robust than instance hijacking)
+    const originalXHROpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (method: string, url: string | URL) {
+      if (isTrackingUrl(url.toString())) {
+        this.send = () => { };
+        return;
+      }
+      return originalXHROpen.apply(this, arguments as any);
+    };
 
     // 3. Beacon Interceptor
     if (navigator.sendBeacon) {
@@ -67,7 +67,41 @@ function App() {
       };
     }
 
-    // 4. Aggressive console hijacking
+    // 4. DOM Element Interceptor (Prevents <img> and <script> tagging)
+    const originalCreateElement = document.createElement;
+    document.createElement = function (tagName: string, options?: ElementCreationOptions) {
+      const el = originalCreateElement.call(document, tagName, options);
+      const tag = tagName.toLowerCase();
+      if (tag === 'img' || tag === 'script') {
+        const originalSetAttribute = el.setAttribute;
+        el.setAttribute = function (name: string, value: string) {
+          if (name === 'src' && isTrackingUrl(value)) return;
+          return originalSetAttribute.call(this, name, value);
+        };
+        Object.defineProperty(el, 'src', {
+          set(value) {
+            if (isTrackingUrl(value)) return;
+            this.setAttribute('src', value);
+          },
+          get() { return this.getAttribute('src'); }
+        });
+      }
+      return el;
+    };
+
+    // 5. Image Constructor Hook
+    const originalImage = window.Image;
+    (window as any).Image = function () {
+      const img = new originalImage();
+      const originalSetAttribute = img.setAttribute;
+      img.setAttribute = function (name, value) {
+        if (name === 'src' && isTrackingUrl(value)) return;
+        return originalSetAttribute.apply(this, arguments as any);
+      };
+      return img;
+    };
+
+    // 6. Aggressive console hijacking
     const originalError = console.error;
     const originalWarn = console.warn;
 
