@@ -24,9 +24,10 @@ function App() {
     const handleSuppression = (event: ErrorEvent | PromiseRejectionEvent) => {
       const message = (event as any).message || (event as any).reason?.message || '';
       // Filter for network errors from known telemetry providers
-      if (message.includes('Failed to fetch') || message.includes('ERR_BLOCKED_BY_CLIENT')) {
+      if (message.includes('Failed to fetch') || message.includes('ERR_BLOCKED_BY_CLIENT') || message.includes('RecordEvent')) {
         const stack = (event as any).error?.stack || (event as any).reason?.stack || '';
-        if (stack.includes('mapbox') || stack.includes('google')) {
+        const url = (event as any).reason?.url || '';
+        if (stack.includes('mapbox') || stack.includes('google') || url.includes('googleapis') || url.includes('mapbox')) {
           event.preventDefault();
         }
       }

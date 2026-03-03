@@ -27,9 +27,10 @@ function loadGoogleMapsApi(apiKey: string): Promise<void> {
 
         const script = document.createElement('script');
         script.id = 'google-maps-script';
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly`;
+        // Add loading=async as required by modern Google Maps API to avoid warnings
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly&loading=async`;
         script.async = true;
-        script.defer = true;
+        // The API now expects this to be loaded asynchronously
         script.onload = () => {
             const checkInit = setInterval(() => {
                 if (window.google?.maps) {
