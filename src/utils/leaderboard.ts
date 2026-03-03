@@ -19,7 +19,10 @@ export interface LeaderboardEntry {
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     try {
         const response = await fetch('/api/leaderboard');
-        if (!response.ok) throw new Error('Failed to fetch leaderboard');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to fetch leaderboard: ${errorText}`);
+        }
 
         const data = await response.json();
 
