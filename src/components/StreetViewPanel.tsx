@@ -10,14 +10,16 @@ interface StreetViewPanelProps {
 /** Loads the Google Maps JS API via script tag (no npm dependency needed). */
 function loadGoogleMapsApi(apiKey: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        if (window.google?.maps?.StreetViewPanorama) {
+        // Must check for StreetViewService specifically — with loading=async,
+        // google.maps can exist before service classes are fully initialized.
+        if (window.google?.maps?.StreetViewService) {
             resolve();
             return;
         }
 
         if (document.getElementById('google-maps-script')) {
             const checkReady = setInterval(() => {
-                if (window.google?.maps?.StreetViewPanorama) {
+                if (window.google?.maps?.StreetViewService) {
                     clearInterval(checkReady);
                     resolve();
                 }
@@ -30,10 +32,10 @@ function loadGoogleMapsApi(apiKey: string): Promise<void> {
         // Add loading=async as required by modern Google Maps API to avoid warnings
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly&loading=async`;
         script.async = true;
-        // The API now expects this to be loaded asynchronously
+        // Wait for StreetViewService to be available, not just google.maps
         script.onload = () => {
             const checkInit = setInterval(() => {
-                if (window.google?.maps) {
+                if (window.google?.maps?.StreetViewService) {
                     clearInterval(checkInit);
                     resolve();
                 }
